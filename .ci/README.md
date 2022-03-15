@@ -17,3 +17,5 @@ Hardware
 Software
 * Ubuntu 18.04.4
 * Internal stable MLNX_OFED, HPC-X and SHARP versions
+
+<!-- CI test, DO NOT MERGE -->
