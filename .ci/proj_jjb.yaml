@@ -1,0 +1,79 @@
+- job-template:
+    name: "{jjb_proj}"
+    project-type: pipeline
+    properties:
+        - github:
+            url: "{jjb_git}"
+        - build-discarder:
+            days-to-keep: 50
+            num-to-keep: 20
+        - inject:
+            keep-system-variables: true
+            properties-content: |
+              jjb_proj={jjb_proj}
+    description: Do NOT edit this job through the Web GUI !
+    concurrent: true
+    sandbox: true
+    parameters:
+        - string:
+            name: "sha1"
+            default: "master"
+            description: "Commit to be checked, set by PR"
+        - bool:
+            name: "build_dockers"
+            default: false
+            description: "Rebuild docker containers"
+        - string:
+            name: "conf_file"
+            default: ".ci/job_matrix.yaml"
+            description: "Regex to select job config file"
+        - bool:
+            name: "do_release"
+            default: false
+            description: "Release rpm"
+        - string:
+            name: "release_dir"
+            default: "/.autodirect/sw/release/sw_acceleration/{jjb_proj}"
+            description: "Location to release rpm to"
+        - string:
+            name: "script"
+            default: "{jjb_jenkinsfile}"
+            description: "Jenkinsfile to load on trigger"
+        - string:
+            name: "DEBUG"
+            default: 0
+            description: "Enable debug prints and traces, valid values are 0-9"
+    triggers:
+        - github-pull-request:
+            cron: 'H/5 * * * *'
+            trigger-phrase: '.*\bbot:retest\b.*'
+            status-add-test-results: true
+            auth-id: '84fb9093-445b-4897-b41b-bcdabc36b12c'
+            org-list: ["Mellanox", "Mellanox-lab", "Nvidia"]
+            allow-whitelist-orgs-as-admins: true
+            cancel-builds-on-update: true
+    pipeline-scm:
+        scm:
+            - git:
+                url: "{jjb_git}"
+                credentials-id: '8dd5412b-9b3e-4110-9e0c-4363b3dfcf66'
+                branches: ['$sha1']
+                shallow-clone: true
+                depth: 10
+                refspec: "+refs/pull/*:refs/remotes/origin/pr/*"
+                browser: githubweb
+                browser-url: "{jjb_git}"
+                submodule:
+                    recursive: true
+                    tracking: true
+        script-path: "$script"
+
+- project:
+    name: proj_name
+    jjb_email: 'arivkin@nvidia.com'
+    jjb_proj: 'nccl-plugin_ci-demo'
+    jjb_git: 'https://github.com/Al3xR01/nccl-rdma-sharp-plugins'
+    jjb_owner: 'Alexey Rivkin'
+    jjb_jenkinsfile: '.ci/Jenkinsfile.shlib'
+    jobs:
+        - "{jjb_proj}"
